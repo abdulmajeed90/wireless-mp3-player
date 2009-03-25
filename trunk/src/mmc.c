@@ -5,8 +5,10 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/signal.h>
+#include <util/delay.h>
 #include <inttypes.h>
 #include <avr/iom16.h>
+#include "uart.h"
 
 #define F_OSC 2457600		           /* oscillator-frequency in Hz */
 #define UART_BAUD_RATE 9600
@@ -19,6 +21,7 @@
 
 char sector[512];
 
+/*
 void delay_ms(unsigned short ms) {
 	unsigned short outer1, outer2;
 	outer1 = 200; 
@@ -70,7 +73,7 @@ void serialterminate(void) { // terminate sent string!!!
 	while(!(UCSRA & (1 << UDRE)));
 	UDR = 0x0a;	
 }
-
+*/
 void SPIinit(void) {
 	DDRB &= ~(1 << SPIDI);	// set port B SPI data input to input
 	DDRB |= (1 << SPICLK);	// set port B SPI clock to output
@@ -134,7 +137,7 @@ int writeramtommc(void) { // write RAM sector to MMC
 	uint8_t c;
 	// 512 byte-write-mode
 	if (Command(0x58,0,512,0xFF) !=0) {
-		uart_puts("MMC: write error 1 ");
+		fprintf(stdout,"MMC: write error 1 ");
 		return 1;	
 	}
 	SPI(0xFF);
@@ -151,7 +154,7 @@ int writeramtommc(void) { // write RAM sector to MMC
 	c = SPI(0xFF);
 	c &= 0x1F; 	// 0x1F = 0b.0001.1111;
 	if (c != 0x05) { // 0x05 = 0b.0000.0101
-		uart_puts("MMC: write error 2 ");
+		fprintf(stdout,"MMC: write error 2 ");
 		return 1;
 	}
 	// wait until MMC is not busy anymore
@@ -163,7 +166,7 @@ int sendmmc(void) { // send 512 bytes from the MMC via the serial port
 	int i;
 	// 512 byte-read-mode 
 	if (Command(0x51,0,512,0xFF) != 0) {
-		uart_puts("MMC: read error 1 ");
+		fprintf(stdout,"MMC: read error 1 ");
 		return 1;
 	}
 	// wait for 0xFE - start of any transmission
@@ -185,13 +188,13 @@ int main(void) {
 	init();
 	SPIinit();
 
-	uart_puts("MCU online");
-	serialterminate();
+	fprintf(stdout,"MCU online\n\r");
+	//serialterminate();
 
 	MMC_Init();
 
-	uart_puts("MMC online");
-	serialterminate();
+	fprintf(stdout,"MMC online\n\r");
+	//serialterminate();
 
 	sei(); // enable interrupts
 	
@@ -199,20 +202,20 @@ int main(void) {
 	writeramtommc();
 	sendmmc();
 
-	uart_puts("512 bytes sent");
-	serialterminate();
-	uart_puts("blinking LED now");
-	serialterminate();
+	fprintf(stdout,"512 bytes sent\n\r");
+	//serialterminate();
+	fprintf(stdout,"blinking LED now");
+	//serialterminate();
 
 	// enable  PD5 as output
 	DDRD |= (1<<PD5);
 	while (1) {
 		// PIN5 PORTD clear -> LED off
 		PORTD &= ~(1<<PD5);
-		delay_ms(500);
+		_delay_ms(500);
 		// PIN5 PORTD set -> LED on
 		PORTD |= (1<<PD5);
-		delay_ms(500);	
+		_delay_ms(500);	
 	}
 	return 0;
 }
