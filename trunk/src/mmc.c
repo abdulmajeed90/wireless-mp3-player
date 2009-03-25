@@ -74,6 +74,10 @@ void serialterminate(void) { // terminate sent string!!!
 	UDR = 0x0a;	
 }
 */
+//prototypes
+
+void init(void);
+
 void SPIinit(void) {
 	DDRB &= ~(1 << SPIDI);	// set port B SPI data input to input
 	DDRB |= (1 << SPICLK);	// set port B SPI clock to output
@@ -118,12 +122,13 @@ st: // if there is no MMC, prg. loops here
 	if (Command(0x41,0,0,0xFF) !=0) goto st;
 	return 1;
 mmcerror:
+	fprintf(stdout,"MMC init error");
 	return 0;
 }
 
 void fillram(void)	 { // fill RAM sector with ASCII characters
 	int i,c;
-	char mystring[18] = "Captain was here! ";
+	char mystring[18] = "I hate babies! ";
 	c = 0;
 	for (i=0;i<=512;i++) {
 		sector[i] = mystring[c];
@@ -186,17 +191,6 @@ int sendmmc(void) { // send 512 bytes from the MMC via the serial port
 
 int main(void) {
 	init();
-	SPIinit();
-
-	fprintf(stdout,"MCU online\n\r");
-	//serialterminate();
-
-	MMC_Init();
-
-	fprintf(stdout,"MMC online\n\r");
-	//serialterminate();
-
-	sei(); // enable interrupts
 	
 	fillram();
 	writeramtommc();
@@ -204,7 +198,7 @@ int main(void) {
 
 	fprintf(stdout,"512 bytes sent\n\r");
 	//serialterminate();
-	fprintf(stdout,"blinking LED now");
+	fprintf(stdout,"blinking LED now\n\r");
 	//serialterminate();
 
 	// enable  PD5 as output
@@ -218,4 +212,24 @@ int main(void) {
 		_delay_ms(500);	
 	}
 	return 0;
+}
+
+void init(void) {
+	SPIinit();
+	//init serial
+	uart_init();
+	stdout = stdin = stderr = &uart_str;
+	fprintf(stdout,"UART running\n\r");
+	
+	
+	fprintf(stdout,"MCU online\n\r");
+	//serialterminate();
+
+	MMC_Init();
+
+	fprintf(stdout,"SD card online\n\r");
+	//serialterminate();
+
+	sei(); // enable interrupts
+
 }
