@@ -16,7 +16,7 @@
 
 #ifndef _FATFS
 
-#define _MCU_ENDIAN		0
+#define _MCU_ENDIAN		2
 /* The _MCU_ENDIAN defines which access method is used to the FAT structure.
 /  1: Enable word access.
 /  2: Disable word access and use byte-by-byte access instead.
@@ -29,7 +29,7 @@
 /  writing functions, f_write, f_sync, f_unlink, f_mkdir, f_chmod, f_rename,
 /  f_truncate, f_getfree and internal writing codes. */
 
-#define _FS_MINIMIZE	0
+#define _FS_MINIMIZE	1
 /* The _FS_MINIMIZE option defines minimization level to remove some functions.
 /  0: Full function.
 /  1: f_stat, f_getfree, f_unlink, f_mkdir, f_chmod, f_truncate and f_rename are removed.
@@ -42,10 +42,10 @@
 #define	_USE_FORWARD	0
 /* To enable f_forward function, set _USE_FORWARD to 1. */
 
-#define _FAT32	0
+#define _FAT32	1
 /* To enable FAT32 support in addition of FAT12/16, set _FAT32 to 1. */
 
-#define _USE_FSINFO	0
+#define _USE_FSINFO	1
 /* To enable FSInfo support on FAT32 volume, set _USE_FSINFO to 1. */
 
 #define	_USE_SJIS	1
