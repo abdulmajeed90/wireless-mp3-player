@@ -16,7 +16,7 @@
 
 #ifndef _FATFS
 
-#define _MCU_ENDIAN		0
+#define _MCU_ENDIAN		2
 /* The _MCU_ENDIAN defines which access method is used to the FAT structure.
 /  1: Enable word access.
 /  2: Disable word access and use byte-by-byte access instead.
@@ -29,7 +29,7 @@
 /  writing functions, f_write, f_sync, f_unlink, f_mkdir, f_chmod, f_rename,
 /  f_truncate and useless f_getfree. */
 
-#define _FS_MINIMIZE	0
+#define _FS_MINIMIZE	1
 /* The _FS_MINIMIZE option defines minimization level to remove some functions.
 /  0: Full function.
 /  1: f_stat, f_getfree, f_unlink, f_mkdir, f_chmod, f_truncate and f_rename are removed.
@@ -43,7 +43,7 @@
 /* When _USE_MKFS is set to 1 and _FS_READONLY is set to 0, f_mkfs function is
 /  enabled. */
 
-#define _DRIVES		2
+#define _DRIVES		1
 /* Number of logical drives to be used. This affects the size of internal table. */
 
 #define	_MULTI_PARTITION	0
@@ -51,7 +51,7 @@
 /  physical drive number and can mount only 1st primaly partition. When it is
 /  set to 1, each logical drive can mount a partition listed in Drives[]. */
 
-#define _USE_FSINFO	0
+#define _USE_FSINFO	1
 /* To enable FSInfo support on FAT32 volume, set _USE_FSINFO to 1. */
 
 #define	_USE_SJIS	1
