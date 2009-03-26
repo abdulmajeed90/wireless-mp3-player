@@ -10,7 +10,6 @@ LED on PIND5.
 *********************************************/
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/signal.h>
 #include <util/delay.h>
 #include <inttypes.h>
 #include <string.h>
@@ -131,10 +130,10 @@ int sendmmc(void) { // send 512 bytes from the MMC via the serial port
 	while(SPI(0xFF) != (char)0xFE);
 
 	for(i=0; i < 512; i++) {
-		while(!(UCSRA & (1 << UDRE))); // wait for serial port
-		UDR = SPI(0xFF);  // send character
+		while(!(UCSR0A & (1 << UDRE0))); // wait for serial port
+		UDR0 = SPI(0xFF);  // send character
 	}
-	serialterminate();
+	//serialterminate();
 	// at the end, send 2 dummy bytes
 	SPI(0xFF); // actually this returns the CRC/checksum byte
 	SPI(0xFF);

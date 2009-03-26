@@ -6,23 +6,27 @@
 /*-----------------------------------------------------------------------*/
 
 #include "diskio.h"
+#include <avr/io.h>
+#include <avr/interrupt.h>
 
 /*-----------------------------------------------------------------------*/
 /* Correspondence between physical drive number and physical drive.      */
 /* Note that Tiny-FatFs supports only single drive and always            */
 /* accesses drive number 0.                                              */
 
-#define ATA		0
-#define MMC		1
+#define ATA		1
+#define MMC		0
 #define USB		2
 
+#define SPICS   4
 /*************************************************************************/
 /*prototypes*/
 char SPI(char d);
-char Command(char, uint16_t, uint16_t, char );
+char Command(char, UINT, UINT, char );
 int MMC_disk_initialize(void);
 int MMC_disk_write(char*, long, char);
 int MMC_disk_read(char*, long, char);
+int MMC_disk_status();
 
 
 /*-----------------------------------------------------------------------*/
@@ -37,7 +41,7 @@ DSTATUS disk_initialize (
 
 	switch (drv) {
 	case ATA :
-		result = ATA_disk_initialize();
+		//result = ATA_disk_initialize();
 		// translate the reslut code here
 
 		return stat;
@@ -49,7 +53,7 @@ DSTATUS disk_initialize (
 		return stat;
 
 	case USB :
-		result = USB_disk_initialize();
+		//result = USB_disk_initialize();
 		// translate the reslut code here
 
 		return stat;
@@ -71,7 +75,7 @@ DSTATUS disk_status (
 
 	switch (drv) {
 	case ATA :
-		result = ATA_disk_status();
+		//result = ATA_disk_status();
 		// translate the reslut code here
 
 		return stat;
@@ -83,7 +87,7 @@ DSTATUS disk_status (
 		return stat;
 
 	case USB :
-		result = USB_disk_status();
+		//result = USB_disk_status();
 		// translate the reslut code here
 
 		return stat;
@@ -108,7 +112,7 @@ DRESULT disk_read (
 
 	switch (drv) {
 	case ATA :
-		result = ATA_disk_read(buff, sector, count);
+		//result = ATA_disk_read(buff, sector, count);
 		// translate the reslut code here
 
 		return res;
@@ -120,7 +124,7 @@ DRESULT disk_read (
 		return res;
 
 	case USB :
-		result = USB_disk_read(buff, sector, count);
+		//result = USB_disk_read(buff, sector, count);
 		// translate the reslut code here
 
 		return res;
@@ -146,7 +150,7 @@ DRESULT disk_write (
 
 	switch (drv) {
 	case ATA :
-		result = ATA_disk_write(buff, sector, count);
+		//result = ATA_disk_write(buff, sector, count);
 		// translate the reslut code here
 
 		return res;
@@ -158,7 +162,7 @@ DRESULT disk_write (
 		return res;
 
 	case USB :
-		result = USB_disk_write(buff, sector, count);
+		//result = USB_disk_write(buff, sector, count);
 		// translate the reslut code here
 
 		return res;
@@ -185,7 +189,7 @@ DRESULT disk_ioctl (
 	case ATA :
 		// pre-process here
 
-		result = ATA_disk_ioctl(ctrl, buff);
+		//result = ATA_disk_ioctl(ctrl, buff);
 		// post-process here
 
 		return res;
@@ -193,7 +197,7 @@ DRESULT disk_ioctl (
 	case MMC :
 		// pre-process here
 
-		result = MMC_disk_ioctl(ctrl, buff);
+		//result = MMC_disk_ioctl(ctrl, buff);
 		// post-process here
 
 		return res;
@@ -201,7 +205,7 @@ DRESULT disk_ioctl (
 	case USB :
 		// pre-process here
 
-		result = USB_disk_ioctl(ctrl, buff);
+		//result = USB_disk_ioctl(ctrl, buff);
 		// post-process here
 
 		return res;
@@ -247,7 +251,6 @@ st: // if there is no MMC, prg. loops here
 	if (Command(0x41,0,0,0xFF) !=0) goto st;
 	return 1;
 mmcerror:
-	fprintf(stdout,"MMC init error");
 	return 0;
 }
 
@@ -256,7 +259,6 @@ int MMC_disk_write(char *buff, long sector, char count){
 	uint8_t c;
 	// 512 byte-write-mode
 	if (Command(0x58,((sector>>16)&0xff),(sector & 0xff),0xFF) !=0) {
-		fprintf(stdout,"MMC: write error 1 ");
 		return 1;	
 	}
 	SPI(0xFF);
@@ -273,7 +275,6 @@ int MMC_disk_write(char *buff, long sector, char count){
 	c = SPI(0xFF);
 	c &= 0x1F; 	// 0x1F = 0b.0001.1111;
 	if (c != 0x05) { // 0x05 = 0b.0000.0101
-		fprintf(stdout,"MMC: write error 2 ");
 		return 1;
 	}
 	// wait until MMC is not busy anymore
@@ -285,7 +286,6 @@ int MMC_disk_read(char *buff, long sector, char count){
 	int i;
 	// 512 byte-read-mode 
 	if (Command(0x51,((sector>>16)&0xff),(sector & 0xff),0xFF) != 0) {
-		fprintf(stdout,"MMC: read error 1 ");
 		return 1;
 	}
 	// wait for 0xFE - start of any transmission
@@ -299,4 +299,8 @@ int MMC_disk_read(char *buff, long sector, char count){
 	SPI(0xFF); // actually this returns the CRC/checksum byte
 	SPI(0xFF);
 	return 0;
+}
+
+int MMC_disk_status(){
+
 }
