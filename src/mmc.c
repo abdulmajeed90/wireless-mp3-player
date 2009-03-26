@@ -1,18 +1,24 @@
 /*********************************************
-* Chip type           : ATmega16
-* Clock frequency     : 2457600Hz
+This program writes a sector to an SD card,
+reads this sector, and spews this data over 
+srial.
+
+Assumes SD card on SPI interface on PORTB
+Serial connected to Computer, hyperterm running
+at 9600Baud, 1 stop bit, no flow
+LED on PIND5.
 *********************************************/
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/signal.h>
 #include <util/delay.h>
 #include <inttypes.h>
-#include <avr/iom16.h>
+#include <string.h>
+#include <stdio.h>
+//#include <avr/iom16.h>
 #include "uart.h"
 
-#define F_OSC 2457600		           /* oscillator-frequency in Hz */
-#define UART_BAUD_RATE 9600
-#define UART_BAUD_CALC(UART_BAUD_RATE,F_OSC) ((F_OSC)/((UART_BAUD_RATE)*16l)-1)
+FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
 #define SPIDI	6	// Port B bit 6 (pin7): data in (data from MMC)
 #define SPIDO	5	// Port B bit 5 (pin6): data out (data to MMC)
@@ -20,60 +26,6 @@
 #define SPICS	4	// Port B bit 4 (pin5: chip select for MMC
 
 char sector[512];
-
-/*
-void delay_ms(unsigned short ms) {
-	unsigned short outer1, outer2;
-	outer1 = 200; 
-	while (outer1) {
-		outer2 = 1000;
-		while (outer2) {
-			while ( ms ) ms--;
-			outer2--;
-		}
-		outer1--;
-	}
-}
-
-void usart_putc(unsigned char c) {
-   // wait until UDR ready
-	while(!(UCSRA & (1 << UDRE)));
-	UDR = c;    // send character
-}
-
-void uart_puts (char *s) {
-	//  loop until *s != NULL
-	while (*s) {
-		usart_putc(*s);
-		s++;
-	}
-}
-
-void init(void) {
-	// set baud rate
-	UBRRH = (uint8_t)(UART_BAUD_CALC(UART_BAUD_RATE,F_OSC)>>8);
-	UBRRL = (uint8_t)UART_BAUD_CALC(UART_BAUD_RATE,F_OSC);
-	// Enable receiver and transmitter; enable RX interrupt
-	UCSRB = (1<<RXEN)|(1<<TXEN)|(1<<RXCIE);
-	//asynchronous 8N1
-	UCSRC = (1<<URSEL)|(3<<UCSZ0);
-}
-
-// INTERRUPT can be interrupted
-// SIGNAL can't be interrupted
-SIGNAL (SIG_UART_RECV) { // USART RX interrupt
-	unsigned char c;
-	c = UDR;
-	usart_putc(c);
-}
-
-void serialterminate(void) { // terminate sent string!!!
-	while(!(UCSRA & (1 << UDRE)));
-	UDR = 0x0d;
-	while(!(UCSRA & (1 << UDRE)));
-	UDR = 0x0a;	
-}
-*/
 //prototypes
 
 void init(void);
@@ -202,13 +154,13 @@ int main(void) {
 	//serialterminate();
 
 	// enable  PD5 as output
-	DDRD |= (1<<PD5);
+	DDRD |= (1<<PIND5);
 	while (1) {
 		// PIN5 PORTD clear -> LED off
-		PORTD &= ~(1<<PD5);
+		PORTD &= ~(1<<PIND5);
 		_delay_ms(500);
 		// PIN5 PORTD set -> LED on
-		PORTD |= (1<<PD5);
+		PORTD |= (1<<PIND5);
 		_delay_ms(500);	
 	}
 	return 0;
@@ -221,6 +173,7 @@ void init(void) {
 	stdout = stdin = stderr = &uart_str;
 	fprintf(stdout,"UART running\n\r");
 	
+	DDRD |= (1<<PIND5);
 	
 	fprintf(stdout,"MCU online\n\r");
 	//serialterminate();
