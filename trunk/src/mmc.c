@@ -156,30 +156,34 @@ int main(void) {
 	DDRD |= (1<<PIND5);
 	while (1) {
 		// PIN5 PORTD clear -> LED off
-		PORTD &= ~(1<<PIND5);
+		//PORTD &= ~(1<<PIND2);
+		PORTD =~ PORTD;
 		_delay_ms(500);
 		// PIN5 PORTD set -> LED on
-		PORTD |= (1<<PIND5);
-		_delay_ms(500);	
+		//PORTD |= (1<<PIND2); 
+		//_delay_ms(500);	
 	}
 	return 0;
 }
 
 void init(void) {
-	SPIinit();
+	
 	//init serial
-	uart_init();
+	//uart_init();
 	stdout = stdin = stderr = &uart_str;
 	fprintf(stdout,"UART running\n\r");
 	
-	DDRD |= (1<<PIND5);
-	
+	//DDRD |= (1<<PIND2);
+	DDRD = 0xff;
+	PORTD = 0xff;
+	SPIinit();
+
 	fprintf(stdout,"MCU online\n\r");
 	//serialterminate();
 
 	MMC_Init();
 
-	fprintf(stdout,"SD card online\n\r");
+	//fprintf(stdout,"SD card online\n\r");
 	//serialterminate();
 
 	sei(); // enable interrupts
