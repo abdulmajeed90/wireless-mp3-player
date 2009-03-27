@@ -73,7 +73,7 @@ st: // if there is no MMC, prg. loops here
 	if (Command(0x41,0,0,0xFF) !=0) goto st;
 	return 1;
 mmcerror:
-	fprintf(stdout,"MMC init error");
+	fprintf(stdout,"MMC init error\n\r");
 	return 0;
 }
 
@@ -93,7 +93,7 @@ int writeramtommc(void) { // write RAM sector to MMC
 	uint8_t c;
 	// 512 byte-write-mode
 	if (Command(0x58,0,512,0xFF) !=0) {
-		fprintf(stdout,"MMC: write error 1 ");
+		fprintf(stdout,"MMC: write error 1 \n\r");
 		return 1;	
 	}
 	SPI(0xFF);
@@ -110,7 +110,7 @@ int writeramtommc(void) { // write RAM sector to MMC
 	c = SPI(0xFF);
 	c &= 0x1F; 	// 0x1F = 0b.0001.1111;
 	if (c != 0x05) { // 0x05 = 0b.0000.0101
-		fprintf(stdout,"MMC: write error 2 ");
+		fprintf(stdout,"MMC: write error 2 \n\r");
 		return 1;
 	}
 	// wait until MMC is not busy anymore
@@ -122,7 +122,7 @@ int sendmmc(void) { // send 512 bytes from the MMC via the serial port
 	int i;
 	// 512 byte-read-mode 
 	if (Command(0x51,0,512,0xFF) != 0) {
-		fprintf(stdout,"MMC: read error 1 ");
+		fprintf(stdout,"MMC: read error 1 \n\r");
 		return 1;
 	}
 	// wait for 0xFE - start of any transmission
@@ -156,12 +156,11 @@ int main(void) {
 	DDRD |= (1<<PIND5);
 	while (1) {
 		// PIN5 PORTD clear -> LED off
-		//PORTD &= ~(1<<PIND2);
-		PORTD =~ PORTD;
+		PORTD &= ~(1<<PIND2);
 		_delay_ms(500);
 		// PIN5 PORTD set -> LED on
-		//PORTD |= (1<<PIND2); 
-		//_delay_ms(500);	
+		PORTD |= (1<<PIND2); 
+		_delay_ms(500);	
 	}
 	return 0;
 }
@@ -169,13 +168,11 @@ int main(void) {
 void init(void) {
 	
 	//init serial
-	//uart_init();
+	uart_init();
 	stdout = stdin = stderr = &uart_str;
 	fprintf(stdout,"UART running\n\r");
 	
-	//DDRD |= (1<<PIND2);
-	DDRD = 0xff;
-	PORTD = 0xff;
+	DDRD |= (1<<PIND2);
 	SPIinit();
 
 	fprintf(stdout,"MCU online\n\r");
