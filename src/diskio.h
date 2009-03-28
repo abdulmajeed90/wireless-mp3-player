@@ -35,7 +35,9 @@ DRESULT disk_write (BYTE, const BYTE*, DWORD, BYTE);
 DRESULT disk_ioctl (BYTE, BYTE, void*);
 void	disk_timerproc (void);
 
-
+char SPI(char d);
+char Command(char, UINT, UINT, char );
+void disk_timerproc (void);
 
 
 /* Disk Status Bits (DSTATUS) */
