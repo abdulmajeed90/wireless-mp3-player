@@ -1,8 +1,4 @@
 /*********************************************
-This program writes a sector to an SD card,
-reads this sector, and spews this data over 
-srial.
-
 Assumes SD card on SPI interface on PORTB
 Serial connected to Computer, hyperterm running
 at 9600Baud, 1 stop bit, no flow
@@ -85,14 +81,14 @@ int main(void) {
 	}
 	
 	/* Display the disk contents (over serial)*/
-	scan_files("DCIM");
+	scan_files("");
 	
-	fprintf(stdout,"\n\n File scan done!\n\rblinking LED now\n\r");
+	fprintf(stdout,"\n\r File scan done!\n\rblinking LED now\n\r");
 
 	while (1) {
 		// PIN2 PORTD clear -> LED off
 		PORTD &= ~(1<<PIND2);
-		_delay_ms(500);
+		_delay_ms(500);	
 		// PIN2 PORTD set -> LED on
 		PORTD |= (1<<PIND2); 
 		_delay_ms(500);	
@@ -128,8 +124,9 @@ void scan_files (char* path)
                 fprintf(stdout,"%s/%s\n", path, &finfo.fname[0]);
             }
         }
-    }
-
+    } else {
+		fprintf(stdout,"\n\rscan_files failed\n\r");
+	}
 }
 
 void init(void) {
