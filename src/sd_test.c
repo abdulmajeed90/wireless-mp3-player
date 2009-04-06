@@ -39,10 +39,12 @@ void SPIinit(void) {
 }
 
 char SPI(char d) {  // send character over SPI
+	PORTB &= ~(1 << SPICS);
 	char received = 0;
 	SPDR = d;
 	while(!(SPSR & (1<<SPIF)));
 	received = SPDR;
+	PORTB |= (1 << SPICS);
 	return (received);
 }
 
@@ -79,12 +81,12 @@ mmcerror:
 
 void fillram(void)	 { // fill RAM sector with ASCII characters
 	int i,c;
-	char mystring[18] = "I hate babies! ";
+	char mystring[25] = "Loose connections suck! ";
 	c = 0;
 	for (i=0;i<=512;i++) {
 		sector[i] = mystring[c];
 		c++;
-		if (c > 17) { c = 0; }
+		if (c > 24) { c = 0; }
 	}
 }
 
@@ -144,16 +146,13 @@ int main(void) {
 	init();
 	
 	fillram();
-	writeramtommc();
+	if (writeramtommc() == 0) fprintf(stdout,"512 bytes sent\n\r");
 	sendmmc();
 
-	fprintf(stdout,"512 bytes sent\n\r");
+	
 	//serialterminate();
 	fprintf(stdout,"blinking LED now\n\r");
 	//serialterminate();
-
-	// enable  PD5 as output
-	DDRD |= (1<<PIND5);
 	while (1) {
 		// PIN5 PORTD clear -> LED off
 		PORTD &= ~(1<<PIND2);
@@ -161,6 +160,9 @@ int main(void) {
 		// PIN5 PORTD set -> LED on
 		PORTD |= (1<<PIND2); 
 		_delay_ms(500);	
+		MMC_Init();
+		if (writeramtommc() == 0) fprintf(stdout,"512 bytes sent\n\r");
+		sendmmc();
 	}
 	return 0;
 }
