@@ -113,6 +113,22 @@ void scan_files (char* path)
     DIR dirs;
     int i;
 
+<<<<<<< .mine
+	fprintf(stdout,"512 bytes sent\n\r");
+	//serialterminate();
+	fprintf(stdout,"blinking LED now\n\r");
+	//serialterminate();
+
+	// enable  PD5 as output
+	DDRD |= (1<<PIND5);
+	while (1) {
+		// PIN5 PORTD clear -> LED off
+		PORTD &= ~(1<<PIND5);
+		_delay_ms(500);
+		// PIN5 PORTD set -> LED on
+		PORTD |= (1<<PIND5); 
+		_delay_ms(500);	
+=======
     if (f_opendir(&dirs, path) == FR_OK) {
         i = strlen(path);
         while ((f_readdir(&dirs, &finfo) == FR_OK) && finfo.fname[0]) {
@@ -126,10 +142,14 @@ void scan_files (char* path)
         }
     } else {
 		fprintf(stdout,"\n\rscan_files failed\n\r");
+>>>>>>> .r16
 	}
 }
 
 void init(void) {
+<<<<<<< .mine
+	
+=======
 	
 	//set up timer 0 for 10 mSec timebase 
 	TIMSK0= (1<<OCIE0A);	//turn on timer 0 cmp match ISR 
@@ -140,14 +160,31 @@ void init(void) {
 	TCCR0A= (1<<WGM01) ;
 
 	
+>>>>>>> .r16
 	//init serial
 	uart_init();
 	stdout = stdin = stderr = &uart_str;
 	fprintf(stdout,"UART running\n\r");
 	
-	DDRD |= (1<<PIND2);
+<<<<<<< .mine
+	DDRD |= (1<<PIND5);
 	SPIinit();
 
+	fprintf(stdout,"MCU online\n\r");
+	//serialterminate();
+=======
+	DDRD |= (1<<PIND2);
+	SPIinit();
+>>>>>>> .r16
+
+<<<<<<< .mine
+	MMC_Init();
+
+	//fprintf(stdout,"SD card online\n\r");
+	//serialterminate();
+
+=======
+>>>>>>> .r16
 	sei(); // enable interrupts
 
 }
