@@ -1,8 +1,12 @@
 /*********************************************
+This program writes a sector to an SD card,
+reads this sector, and spews this data over 
+srial.
+
 Assumes SD card on SPI interface on PORTB
 Serial connected to Computer, hyperterm running
 at 9600Baud, 1 stop bit, no flow
-LED on PIND2.
+LED on PIND5.
 *********************************************/
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -12,7 +16,6 @@ LED on PIND2.
 #include <stdio.h>
 //#include <avr/iom16.h>
 #include "uart.h"
-#include "tff.h"
 
 FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
@@ -25,77 +28,6 @@ char sector[512];
 //prototypes
 
 void init(void);
-void scan_files (char*);
-void SPIinit(void);
-
-
-//**********************************************************
-//timer 0 overflow ISR
-//**********************************************************
-ISR (TIMER0_COMPA_vect) 
-{
-  disk_timerproc();
-}
-
-//**********************************************************************
-//  Main
-//**********************************************************************
-
-int main(void) {
-	init();
-	
-	FATFS fso;
-	DIR root;
-										//create file system object
-	/* Create a work area for the drive */
-	if (f_mount(0, &fso) == FR_INVALID_DRIVE) {
-		fprintf(stdout,"Invalid drive number\n\r");
-	}
-
-	switch (f_opendir(&root,"DCIM")) {
-		case(FR_OK):
-		    fprintf(stdout,"The function succeeded and the directory object is created. It is used for subsequent calls to read the directory entries.");
-			break;
-		case(FR_NO_PATH):
-		    fprintf(stdout,"Could not find the path.");
-			break;
-		case(FR_INVALID_NAME):
-		    fprintf(stdout,"The path name is invalid.");
-			break;
-		case(FR_INVALID_DRIVE):
-		    fprintf(stdout,"The drive number is invalid.");
-			break;
-		case(FR_NOT_READY):
-		    fprintf(stdout,"The disk drive cannot work due to no medium in the drive or any other reason.");
-			break;
-		case(FR_RW_ERROR):
-		    fprintf(stdout,"The function failed due to a disk error or an internal error.");
-			break;
-		case(FR_NOT_ENABLED):
-		    fprintf(stdout,"The logical drive has no work area.");
-			break;
-		case(FR_NO_FILESYSTEM):
-		    fprintf(stdout,"There is no valid FAT partition on the disk.");
-			break;
-		default: fprintf(stdout, "Rewrite this shit");
-	}
-	
-	/* Display the disk contents (over serial)*/
-	scan_files("");
-	
-	fprintf(stdout,"\n\r File scan done!\n\rblinking LED now\n\r");
-
-	while (1) {
-		// PIN2 PORTD clear -> LED off
-		PORTD &= ~(1<<PIND2);
-		_delay_ms(500);	
-		// PIN2 PORTD set -> LED on
-		PORTD |= (1<<PIND2); 
-		_delay_ms(500);	
-	}
-	return 0;
-}
-
 
 void SPIinit(void) {
 	DDRB &= ~(1 << SPIDI);	// set port B SPI data input to input
@@ -103,17 +35,118 @@ void SPIinit(void) {
 	DDRB |= (1 << SPIDO);	// set port B SPI data out to output 
 	DDRB |= (1 << SPICS);	// set port B SPI chip select to output
 	SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (1 << SPR0);
-	// SPSR = (1<< SPI2X);
 	PORTB &= ~(1 << SPICS);	// set chip select to low (MMC is selected)
 }
 
-void scan_files (char* path)
-{
-    FILINFO finfo;
-    DIR dirs;
-    int i;
+char SPI(char d) {  // send character over SPI
+	char received = 0;
+	SPDR = d;
+	while(!(SPSR & (1<<SPIF)));
+	received = SPDR;
+	return (received);
+}
 
-<<<<<<< .mine
+
+char Command(char befF, uint16_t AdrH, uint16_t AdrL, char befH )
+{	// sends a command to the MMC
+	SPI(0xFF);
+	SPI(befF);
+	SPI((uint8_t)(AdrH >> 8));
+	SPI((uint8_t)AdrH);
+	SPI((uint8_t)(AdrL >> 8));
+	SPI((uint8_t)AdrL);
+	SPI(befH);
+	SPI(0xFF);
+	return SPI(0xFF);	// return the last received character
+}
+
+int MMC_Init(void) { // init SPI
+	char i;
+	PORTB |= (1 << SPICS); // disable MMC
+	// start MMC in SPI mode
+	for(i=0; i < 10; i++) SPI(0xFF); // send 10*8=80 clock pulses
+	PORTB &= ~(1 << SPICS); // enable MMC
+
+	if (Command(0x40,0,0,0x95) != 1) goto mmcerror; // reset MMC
+
+st: // if there is no MMC, prg. loops here
+	if (Command(0x41,0,0,0xFF) !=0) goto st;
+	return 1;
+mmcerror:
+	fprintf(stdout,"MMC init error");
+	return 0;
+}
+
+void fillram(void)	 { // fill RAM sector with ASCII characters
+	int i,c;
+	char mystring[18] = "I hate babies! ";
+	c = 0;
+	for (i=0;i<=512;i++) {
+		sector[i] = mystring[c];
+		c++;
+		if (c > 17) { c = 0; }
+	}
+}
+
+int writeramtommc(void) { // write RAM sector to MMC
+	int i;
+	uint8_t c;
+	// 512 byte-write-mode
+	if (Command(0x58,0,512,0xFF) !=0) {
+		fprintf(stdout,"MMC: write error 1 ");
+		return 1;	
+	}
+	SPI(0xFF);
+	SPI(0xFF);
+	SPI(0xFE);
+	// write ram sectors to MMC
+	for (i=0;i<512;i++) {
+		SPI(sector[i]);
+	}
+	// at the end, send 2 dummy bytes
+	SPI(0xFF);
+	SPI(0xFF);
+
+	c = SPI(0xFF);
+	c &= 0x1F; 	// 0x1F = 0b.0001.1111;
+	if (c != 0x05) { // 0x05 = 0b.0000.0101
+		fprintf(stdout,"MMC: write error 2 ");
+		return 1;
+	}
+	// wait until MMC is not busy anymore
+	while(SPI(0xFF) != (char)0xFF);
+	return 0;
+}
+
+int sendmmc(void) { // send 512 bytes from the MMC via the serial port
+	int i;
+	// 512 byte-read-mode 
+	if (Command(0x51,0,512,0xFF) != 0) {
+		fprintf(stdout,"MMC: read error 1 ");
+		return 1;
+	}
+	// wait for 0xFE - start of any transmission
+	// ATT: typecast (char)0xFE is a must!
+	while(SPI(0xFF) != (char)0xFE);
+
+	for(i=0; i < 512; i++) {
+		while(!(UCSR0A & (1 << UDRE0))); // wait for serial port
+		UDR0 = SPI(0xFF);  // send character
+	}
+	//serialterminate();
+	// at the end, send 2 dummy bytes
+	SPI(0xFF); // actually this returns the CRC/checksum byte
+	SPI(0xFF);
+	return 0;
+}
+
+int main(void) {
+	init();
+	
+	fillram();
+	writeramtommc();
+	sendmmc();
+
 	fprintf(stdout,"512 bytes sent\n\r");
 	//serialterminate();
 	fprintf(stdout,"blinking LED now\n\r");
@@ -128,63 +161,28 @@ void scan_files (char* path)
 		// PIN5 PORTD set -> LED on
 		PORTD |= (1<<PIND5); 
 		_delay_ms(500);	
-=======
-    if (f_opendir(&dirs, path) == FR_OK) {
-        i = strlen(path);
-        while ((f_readdir(&dirs, &finfo) == FR_OK) && finfo.fname[0]) {
-            if (finfo.fattrib & AM_DIR) {
-                sprintf(&path[i], "/%s", &finfo.fname[0]);
-                scan_files(path);
-                path[i] = 0;
-            } else {
-                fprintf(stdout,"%s/%s\n", path, &finfo.fname[0]);
-            }
-        }
-    } else {
-		fprintf(stdout,"\n\rscan_files failed\n\r");
->>>>>>> .r16
 	}
+	return 0;
 }
 
 void init(void) {
-<<<<<<< .mine
 	
-=======
-	
-	//set up timer 0 for 10 mSec timebase 
-	TIMSK0= (1<<OCIE0A);	//turn on timer 0 cmp match ISR 
-	OCR0A = 195;  		//set the compare re to 250 time ticks
-	//set prescalar to divide by 1024 
-	TCCR0B= (1<<CS02)|(1<<CS00); //0b00001011;	
-	// turn on clear-on-match
-	TCCR0A= (1<<WGM01) ;
-
-	
->>>>>>> .r16
 	//init serial
 	uart_init();
 	stdout = stdin = stderr = &uart_str;
 	fprintf(stdout,"UART running\n\r");
 	
-<<<<<<< .mine
 	DDRD |= (1<<PIND5);
 	SPIinit();
 
 	fprintf(stdout,"MCU online\n\r");
 	//serialterminate();
-=======
-	DDRD |= (1<<PIND2);
-	SPIinit();
->>>>>>> .r16
 
-<<<<<<< .mine
 	MMC_Init();
 
 	//fprintf(stdout,"SD card online\n\r");
 	//serialterminate();
 
-=======
->>>>>>> .r16
 	sei(); // enable interrupts
 
 }
