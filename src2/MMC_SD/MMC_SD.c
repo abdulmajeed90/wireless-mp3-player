@@ -96,7 +96,7 @@ uint8 MMC_SD_SendCommand(uint8 cmd, uint32 arg)
 uint8 MMC_SD_Reset(void)
 {
 	uint8 i;
-	uint16 retry;
+	uint8 retry;
 	uint8 r1=0;
 	retry = 0;
 	SPI_Low();
@@ -110,21 +110,21 @@ uint8 MMC_SD_Reset(void)
 
 
 	retry = 0;
-	do{ 
+/*	do{ 
 		r1 = MMC_SD_SendCommand(55,0);
 		r1 = MMC_SD_SendCommand(41,0);
 		retry++;
 		if(retry>2048) break;	//time out
 	} while(r1);
 	if (r1 == 0) goto sdc_init;
-	do
+*/	do
 	{
 		r1 = MMC_SD_SendCommand(1, 0);	//send active command
 		retry++;
-		if(retry>2048) return 1;	//time out
+		if(retry>249) return r1;	//time out
 	} while(r1);
-sdc_init:
-	SPI_High();
+//sdc_init:
+	SP9I_High();
 	r1 = MMC_SD_SendCommand(59, 0);		//disable CRC
 
 	r1 = MMC_SD_SendCommand(16, 512);	//set sector size to 512
