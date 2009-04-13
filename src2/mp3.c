@@ -29,15 +29,18 @@ char *last;
 int main() {
 
 	init();
+	uint8 r1;
 	
 //	while (1) {
 		MMC_SD_Init();	//SPI initialize
 		fprintf(stdout,"SPI initialized\n\r");
 	
-		while(MMC_SD_Reset())//初始化SD卡					//sd card initialize
+		while(r1 = MMC_SD_Reset())//初始化SD卡					//sd card initialize
 		{
 			retry++;
-			if(retry>20)
+			fprintf(stdout,"%d ",r1);
+			if (retry>200)retry = 0;
+			if(retry>200)
 			{
 			//	LED2_ON();
 				while(1)
