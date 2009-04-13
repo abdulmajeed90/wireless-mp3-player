@@ -31,8 +31,8 @@
 
 
 /* Port Controls  (Platform dependent) */
-#define SELECT()	PORTB &= ~1		/* MMC CS = L */
-#define	DESELECT()	PORTB |= 1		/* MMC CS = H */
+#define SELECT()	PORTB &= ~(1<<PINB4)		/* MMC CS = L */
+#define	DESELECT()	PORTB |= (1<<PINB4)		/* MMC CS = H */
 
 #define SOCKPORT	PINB			/* Socket contact port */
 #define SOCKWP		0x20			/* Write protect switch (PB5) */
@@ -48,9 +48,6 @@
 
 static volatile
 DSTATUS Stat = STA_NOINIT;	/* Disk status */
-
-static volatile
-BYTE Timer1, Timer2;	/* 100Hz decrement timer */
 
 static
 BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
@@ -127,22 +124,28 @@ void power_on (void)
 {
 	//PORTE &= ~0x80;				/* Socket power ON */
 	for (Timer1 = 3; Timer1; );	/* Wait for 30ms */
-	PORTB = 0b10110101;			/* Enable drivers */
-	DDRB  = 0b11000111;
-	SPCR = 0b01010000;			/* Initialize SPI port (Mode 0) */
-	SPSR = 0b00000001;
+	DDRB &= ~(1 << SPIDI);	// set port B SPI data input to input
+	DDRB |= (1 << SPICLK);	// set port B SPI clock to output
+	DDRB |= (1 << SPIDO);	// set port B SPI data out to output 
+	DDRB |= (1 << SPICS);	// set port B SPI chip select to output
+	SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (1 << SPR0);// 20MHz/128
+	PORTB &= ~(1 << SPICS);	// set chip select to low (MMC is selected)
+	//PORTB = 0b10110101;			/* Enable drivers */
+	//DDRB  = 0b11000111;
+	//SPCR = 0b01010000;			/* Initialize SPI port (Mode 0) */
+	//SPSR = 0b00000001;
 }
 
 static
 void power_off (void)
 {
-	SELECT();				/* Wait for card ready */
-	wait_ready();
-	release_spi();
+	//SELECT();				/* Wait for card ready */
+	//wait_ready();
+	//release_spi();
 
-	SPCR = 0;				/* Disable SPI function */
-	DDRB  = 0b11000000;		/* Disable drivers */
-	PORTB = 0b10110000;
+	//SPCR = 0;				/* Disable SPI function */
+	//DDRB  = 0b11000000;		/* Disable drivers */
+	//PORTB = 0b10110000;
 	//PORTE |=  0x80;			/* Socket power OFF */
 	Stat |= STA_NOINIT;		/* Set STA_NOINIT */
 }
@@ -326,7 +329,9 @@ DSTATUS disk_initialize (
 	} else {			/* Initialization failed */
 		power_off();
 	}
-
+	//set highest speed for SPI interface
+	SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (1 << SPR0);//20MHz/8
+    SPSR = 1;
 	return Stat;
 }
 
