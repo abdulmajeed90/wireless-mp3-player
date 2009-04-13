@@ -6,9 +6,15 @@
 
 #define _READONLY	0	/* 1: Read-only mode */
 #define _USE_IOCTL	1
+#define SPIDI	6	// Port B bit 6 (pin7): data in (data from MMC)
+#define SPIDO	5	// Port B bit 5 (pin6): data out (data to MMC)
+#define SPICLK	7	// Port B bit 7 (pin8): clock
+#define SPICS	4	// Port B bit 4 (pin5: chip select for MMC
 
 #include "integer.h"
 
+static volatile
+BYTE Timer1, Timer2;	/* 100Hz decrement timer */
 
 /* Status of Disk Functions */
 typedef BYTE	DSTATUS;
