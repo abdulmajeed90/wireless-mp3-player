@@ -66,6 +66,18 @@ void sta013_start(void);
 void sta013_read(void);
 
 int main(void) {
+	init();
+	for (unsigned int i = 0; i<4096; i++) {
+		EEAR = i;
+		EECR |= (1<<EERE); 	//initiate a read of eeprom
+		fprintf(stdout,"location: %d\tValue:%d",i, EEDR);  //print out eeprom value
+		//while(PINA & 1<<DATA_REQ); //wait for STA to drive DATA_REQ pin low
+		/*for (j = 7; j >=0; j--) {
+    		CLOCK = 0;
+    		DATA = (mp3_byte >> j) & 0x01;
+    		CLOCK = 1;
+  		}*/
+	}
 
 }
 void init(void) {
@@ -78,7 +90,15 @@ void init(void) {
 	DDRD |= (1<<PIND2);
 
 	fprintf(stdout,"MCU online\n\r");
+	
+	//set up the STA013
+	while(config_sta013()){}
+	fprintf(stdout,"STA013 initialized");
 
+	//start up the STA013
+	sta013_start();
+	fprintf(stdout,"started successfully!!!");
+	
 	sei(); // enable interrupts
 
 }
