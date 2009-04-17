@@ -31,6 +31,8 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 //PLL register values for the SAT013. Specific to clock freq 16MHz
 const uint8_t config_PLL[] = {7,1,6,22,11,3,80,16,81,139,82,253,97,14,100,61,101,10};
 
+const uint8_t STA013_UpdateData[] = {0};
+/*
 //Initialisation table required by STA013
 const uint8_t STA013_UpdateData[] = {
 58, 1,42, 4,40, 0,41, 0,32, 0,33, 0,34, 0,35, 0,36, 0,37, 0,38, 0,39, 0,40, 1,40, 2,33, 143,40, 3,33, 0,40, 4,40, 5,40, 6,40, 7,40, 8,40, 9,40, 10,40, 11,40, 12,32, 128,33, 144,40, 13,32, 0,33, 0,40, 14,32, 129,33, 145,40, 15,32, 0,33, 146,40, 16,33, 0,40, 17,33, 147,40, 18,33, 0,40, 19,40, 20,40, 21,32, 130,40, 22,32, 0,40, 23,40, 24,40, 25,33, 148,40, 26,33, 149,40, 27,33, 150,40, 28,33, 0,40, 29,32, 131,40, 30,32, 0,40, 31,33, 151,40, 32,33, 0,40, 33,40, 34,40, 35,40, 36,40, 37,40, 38,40, 39,40, 40,40, 41,40, 42,32, 132,40, 43,32, 0,40, 44,40, 45,40, 46,40, 47,40, 48,40, 49,40, 50,32, 133,40, 51,32, 0,40, 52,40, 53,40, 54,40, 55,33, 152,40, 56,33, 0,40, 57,40, 58,40, 59,40, 60,40, 61,40, 62,40, 63,40, 64,40, 65,40, 66,40, 67,40, 68,40, 69,40, 70,40, 71,40, 72,40, 73,40, 74,40, 75,40, 76,40, 77,40, 78,40, 79,40, 80,40, 81,40, 82,40, 83,40, 84,40, 85,40, 86,40, 87,40, 88,40, 89,40, 90,40, 91,40, 92,40, 93,40, 94,40, 95,40, 96,40, 97,40, 98,33, 153,40, 99,33, 0,40, 100,40, 101,40, 102,40, 103,40, 104,40, 105,40, 106,40, 107,40, 108,40, 109,40, 110,40, 111,40, 112,40, 113,40, 114,40, 115,40, 116,40, 117,40, 118,40, 119,40, 120,40, 121,40, 122,40, 123,40, 124,40, 125,40, 126,40, 127,40, 128,40, 129,40, 130,40, 131,40, 132,40, 133,40, 134,40, 135,40, 136,40, 137,40, 138,40, 139,40, 140,40, 141,40, 142,40, 143,40, 144,40, 145,32, 134,40, 146,32, 135,40, 147,32, 0,40, 148,40, 149,40, 150,40, 151,40, 152,40, 153,40, 154,40, 155,40, 156,40, 157,40, 158,40, 159,33, 154,40, 160,33, 0,40, 161,40, 162,40, 163,40, 164,40, 165,40, 166,40, 167,40, 168,40, 169,40, 170,40, 171,40, 172,40, 173,40, 174,40, 175,40, 176,40, 177,40, 178,40, 179,40, 180,40, 181,40, 182,40, 183,40, 184,40, 185,32, 136,40, 186,32, 0,40, 187,32, 137,40, 188,32, 0,40, 189,40, 190,40, 191,40, 192,40, 193,40, 194,40, 195,33, 155,40, 196,33, 0,40, 197,40, 198,40, 199,40, 200,40, 201,40, 202,40, 203,40, 204,40, 205,40, 206,40, 207,40, 208,40, 209,40, 210,40, 211,40, 212,40, 213,40, 214,40, 215,40, 216,40, 217,40, 218,40, 219,40, 220,
@@ -46,10 +48,10 @@ const uint8_t STA013_UpdateData[] = {
 38, 170,40, 244,32, 112,33, 80,34, 184,35, 149,38, 2,39, 8,40, 245,32, 5,33, 0,34, 0,35, 132,38, 180,39, 9,40, 246,32, 0,33, 1,35, 128,36, 134,37, 203,38, 171,39, 10,40, 247,32, 66,33, 225,34, 15,36, 137,37, 7,38, 170,40, 248,32, 0,33, 2,34, 0,35, 0,36, 129,37, 196,38, 171,40, 249,33, 0,35, 128,36, 137,37, 72,38, 170,40, 250,32, 5,35, 132,37, 7,38, 180,39, 9,40, 251,32, 
 112,33, 78,34, 184,35, 149,38, 16,39, 8,40, 252,32, 0,33, 0,34, 0,35, 128,36, 134,37, 195,38, 171,39, 10,40, 253,32, 66,33, 231,34, 15,36, 137,37, 7,38, 170,40, 254,32, 0,33, 187,34, 0,35, 149,38, 32,39, 
 0,40, 255,32, 5,33, 0,35, 132,38, 180,39, 9,42, 8,16, 1,58, 0,10,0, 58,10,1, 187,8 ,58,9 ,187,80, 16,82, 103,81, 119,5 ,161,24, 4};
-
+*/
 
 //STA013 chip variables
-const unsigned int max_config_index = 4014;
+const unsigned int max_config_index = 2;//4014;
 const uint8_t max_PLL_index=18;
 
 uint8_t address, data, errorFlag,I2C_byte;
@@ -70,13 +72,17 @@ int main(void) {
 	for (unsigned int i = 0; i<4096; i++) {
 		EEAR = i;
 		EECR |= (1<<EERE); 	//initiate a read of eeprom
-		fprintf(stdout,"location: %d\tValue:%d",i, EEDR);  //print out eeprom value
+		fprintf(stdout,"location: %d\tValue:%d\n\r",i, EEDR);  //print out eeprom value
 		//while(PINA & 1<<DATA_REQ); //wait for STA to drive DATA_REQ pin low
 		/*for (j = 7; j >=0; j--) {
     		CLOCK = 0;
     		DATA = (mp3_byte >> j) & 0x01;
     		CLOCK = 1;
   		}*/
+		_delay_ms(50);
+		set(PORTD,PIND2);
+		_delay_ms(50);
+		clr(PORTD,PIND2);
 	}
 
 }
@@ -88,6 +94,10 @@ void init(void) {
 	fprintf(stdout,"UART running\n\r");
 	
 	DDRD |= (1<<PIND2);
+	set(PORTD,PIND2);
+
+	//set output pins as outputs
+	DDRA = (1<<I2C_SCL)|(1<<DATA)|(1<<CLOCK)|(1<<RESET);
 
 	fprintf(stdout,"MCU online\n\r");
 	
@@ -106,7 +116,8 @@ void init(void) {
 void sta013_I2C_start(void) begin
 
    // High to low transition of I2C_SDA while I2C_SCL is high
-   set(PORTA,I2C_SDA_direction);	//set to output
+   set(DDRA,I2C_SDA_direction);	//set to output
+   clr(PORTD,PIND2);
    _delay_us(5);
    set(PORTA,I2C_SDA_out);
    _delay_us(5);
@@ -120,10 +131,13 @@ end
 
 void sta013_I2C_write(void) begin
 
+	fprintf(stdout,"inside sta013_I2C_write. Writing %x\n\r",I2C_byte);
    // Clock each bit onto the SDA bus (starting with the MSB)
-   set(PORTA,I2C_SDA_direction);	//set to output
+   set(PORTA,I2C_SCL);
+   set(DDRA,I2C_SDA_direction);	//set to output
+   clr(PORTD,PIND2);
 
-   for(uint8_t j = 7; j >= 0; j--) begin
+   for(int8_t j = 7; j >= 0; j--) begin
       _delay_us(5);   
       clr(PORTA,I2C_SCL); //I2C_SCL is the clock (what is the min/max clock speed?)
       _delay_us(5);
@@ -136,7 +150,8 @@ void sta013_I2C_write(void) begin
    // Get the ack bit
    clr(PORTA,I2C_SCL);
    _delay_us(5);   
-   clr(PORTA,I2C_SDA_direction);	//set to output
+   clr(DDRA,I2C_SDA_direction);	//set to input
+   set(PORTD,PIND2);
    _delay_us(5);
    set(PORTA,I2C_SCL);
    _delay_us(5);
@@ -150,12 +165,13 @@ void sta013_I2C_read(void) begin
    data = 0x00;
 
    // Clock each bit off of the SDA bus
-   clr(PORTA,I2C_SDA_direction);	//set to intput
+   clr(DDRA,I2C_SDA_direction);	//set to intput
+   set(PORTD,PIND2);
    _delay_us(5);
    clr(PORTA,I2C_SCL);
    _delay_us(5);  
 
-   for(uint8_t j = 7; j >= 0; j--) begin   
+   for(int8_t j = 7; j >= 0; j--) begin   
       set(PORTA,I2C_SCL);
       _delay_us(5);
       data = data | (((PINA & (1<<I2C_SDA_in)) >> I2C_SDA_in)<<j);     // Read the bit while I2C_SCL is high
@@ -168,7 +184,8 @@ end
 void sta013_I2C_stop(void) begin
 
    // Low to high transition of I2C_SDA while I2C_SCL is high
-   set(PORTA,I2C_SDA_direction);	//set to output
+   set(DDRA,I2C_SDA_direction);	//set to output
+   clr(PORTD,PIND2);
    _delay_us(5);
    clr(PINA,I2C_SDA_out);
    _delay_us(5);
@@ -184,7 +201,7 @@ end
 
 void sta013_read(void) begin
 
-  fprintf(stdout,"inside sta013_read\r\n");
+   fprintf(stdout,"Inside sta013_read\r\n");
 
    // Start Condition
    sta013_I2C_start();
@@ -248,6 +265,7 @@ void sta013_read(void) begin
 end
 
 void sta013_write(void) begin
+	fprintf(stdout,"inside sta013_write\n\r");
 
    // Start Condition
    sta013_I2C_start();
@@ -298,6 +316,7 @@ void sta013_start(void) begin
    else
       fprintf(stdout,"Starting mp3 player...\r\n");
 end
+
 
 unsigned int config_sta013(void) begin    
 
