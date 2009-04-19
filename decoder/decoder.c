@@ -31,7 +31,7 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 //constants
 
 //STA013 chip constants
-#define max_config_index  4014
+#define max_config_index  4016
 #define max_PLL_index     18
 
 const char test[] PROGMEM = "bye";
@@ -137,7 +137,6 @@ void sta013_I2C_write(void) begin
 
 	fprintf(stdout,"inside sta013_I2C_write. Writing %x\n\r",I2C_byte);
    // Clock each bit onto the SDA bus (starting with the MSB)
-   set(PORTA,I2C_SCL);
    set(DDRA,I2C_SDA_direction);	//set to output
    clr(PORTD,PIND2);
 
@@ -159,7 +158,7 @@ void sta013_I2C_write(void) begin
    _delay_us(5);
    set(PORTA,I2C_SCL);
    _delay_us(5);
-   errorFlag = (PINA & (1<<I2C_SDA_in))>>I2C_SDA_in; //should be a 0
+   errorFlag = ((PINA & (1<<I2C_SDA_in))>>I2C_SDA_in); //should be a 0
    _delay_us(5);
    clr(PORTA,I2C_SCL);  
 end      
