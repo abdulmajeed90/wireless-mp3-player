@@ -346,7 +346,7 @@ unsigned int config_sta013(void) begin
    fprintf(stdout,"beginning to load STA013 config file\r\n");  
 
    // Send STA013_updatedata information to STA013 (i.e., STA013 config file)
-   for (uint8_t i = 0 ; i < max_config_index ;) begin
+   for (uint8_t i = 0 ; i < sizeof(STA013_UpdateData) ;) begin
       address = STA013_UpdateData[i];                // Load the address into the address reg, r4
       data    = STA013_UpdateData[i+1];              // Load the data into the data reg, r5
       sta013_write();                                // Write data to STA013
