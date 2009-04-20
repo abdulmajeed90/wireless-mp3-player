@@ -134,7 +134,6 @@ void sta013_I2C_start(void) begin
 end
 
 void sta013_I2C_write(void) begin
-
 	fprintf(stdout,"inside sta013_I2C_write. Writing %x\n\r",I2C_byte);
    // Clock each bit onto the SDA bus (starting with the MSB)
    set(DDRA,I2C_SDA_direction);	//set to output
