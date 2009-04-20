@@ -29,6 +29,7 @@
 FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);	
 
 //constants
+#define t 50		//sets I2C clock half period
 
 //STA013 chip constants
 #define max_config_index  4016
@@ -37,8 +38,6 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 const char test[] PROGMEM = "bye";
 //PLL register values for the SAT013. Specific to clock freq 16MHz
 const uint8_t  config_PLL[max_PLL_index] PROGMEM = {7,1,6,22,11,3,80,16,81,139,82,253,97,14,100,61,101,10};
-
-//const uint8_t STA013_UpdateData[] = {0};
 
 //Initialisation table required by STA013
 const uint8_t STA013_UpdateData[max_config_index] PROGMEM= {
@@ -76,7 +75,7 @@ int main(void) {
 	for (unsigned int i = 0; i<4096; i++) {
 		EEAR = i;
 		EECR |= (1<<EERE); 	//initiate a read of eeprom
-		fprintf(stdout,"location: %d\tValue:%d\n\r",i, EEDR);  //print out eeprom value
+		//fprintf(stdout,"location: %d\tValue:%d\n\r",i, EEDR);  //print out eeprom value
 		//while(PINA & 1<<DATA_REQ); //wait for STA to drive DATA_REQ pin low
 		/*for (j = 7; j >=0; j--) {
     		CLOCK = 0;
@@ -106,12 +105,13 @@ void init(void) {
 	fprintf(stdout,"MCU online\n\r");
 	
 	//set up the STA013
-	while(config_sta013()){}
-	fprintf(stdout,"STA013 initialized");
+	//while(config_sta013()){}
+	config_sta013();
+	fprintf(stdout,"STA013 initialized\n\r\n\r");
 
 	//start up the STA013
 	sta013_start();
-	fprintf(stdout,"started successfully!!!");
+	fprintf(stdout,"started successfully!!!\n\r\n\r");
 	
 	sei(); // enable interrupts
 
@@ -122,15 +122,15 @@ void sta013_I2C_start(void) begin
    // High to low transition of I2C_SDA while I2C_SCL is high
    set(DDRA,I2C_SDA_direction);	//set to output
    clr(PORTD,PIND2);
-   _delay_us(5);
+   _delay_us(t);
    set(PORTA,I2C_SDA_out);
-   _delay_us(5);
+   _delay_us(t);
    set(PORTA,I2C_SCL);
-   _delay_us(5);
+   _delay_us(t);
    clr(PORTA,I2C_SDA_out);
-   _delay_us(5);
+   _delay_us(t);
    clr(PORTA,I2C_SCL);
-   _delay_us(5);
+   _delay_us(t);
 end
 
 void sta013_I2C_write(void) begin
@@ -140,25 +140,25 @@ void sta013_I2C_write(void) begin
    clr(PORTD,PIND2);
 
    for(int8_t j = 7; j >= 0; j--) begin
-      _delay_us(5);   
+      _delay_us(t);   
       clr(PORTA,I2C_SCL); //I2C_SCL is the clock (what is the min/max clock speed?)
-      _delay_us(5);
+      _delay_us(t);
       ((I2C_byte >> j) & 0x01)?set(PORTA,I2C_SDA_out):clr(PORTA,I2C_SDA_out); // Write each bit while I2C_SCL is low
-      _delay_us(5);
+      _delay_us(t);
       set(PORTA,I2C_SCL);
-      _delay_us(5);
+      _delay_us(t);
    end
 
    // Get the ack bit
    clr(PORTA,I2C_SCL);
-   _delay_us(5);   
+   _delay_us(t);   
    clr(DDRA,I2C_SDA_direction);	//set to input
    set(PORTD,PIND2);
-   _delay_us(5);
+   _delay_us(t);
    set(PORTA,I2C_SCL);
-   _delay_us(5);
+   _delay_us(t);
    errorFlag = ((PINA & (1<<I2C_SDA_in))>>I2C_SDA_in); //should be a 0
-   _delay_us(5);
+   _delay_us(t);
    clr(PORTA,I2C_SCL);  
 end      
 
@@ -169,17 +169,17 @@ void sta013_I2C_read(void) begin
    // Clock each bit off of the SDA bus
    clr(DDRA,I2C_SDA_direction);	//set to intput
    set(PORTD,PIND2);
-   _delay_us(5);
+   _delay_us(t);
    clr(PORTA,I2C_SCL);
-   _delay_us(5);  
+   _delay_us(t);  
 
    for(int8_t j = 7; j >= 0; j--) begin   
       set(PORTA,I2C_SCL);
-      _delay_us(5);
+      _delay_us(t);
       data = data | (((PINA & (1<<I2C_SDA_in)) >> I2C_SDA_in)<<j);     // Read the bit while I2C_SCL is high
-      _delay_us(5);
+      _delay_us(t);
       clr(PORTA,I2C_SCL);
-      _delay_us(5);
+      _delay_us(t);
    end
 end
 
@@ -188,15 +188,15 @@ void sta013_I2C_stop(void) begin
    // Low to high transition of I2C_SDA while I2C_SCL is high
    set(DDRA,I2C_SDA_direction);	//set to output
    clr(PORTD,PIND2);
-   _delay_us(5);
+   _delay_us(t);
    clr(PINA,I2C_SDA_out);
-   _delay_us(5);
+   _delay_us(t);
    set(PORTA,I2C_SCL);
-   _delay_us(5);
+   _delay_us(t);
    set(PORTA,I2C_SDA_out);
-   _delay_us(5);
+   _delay_us(t);
    clr(PORTA,I2C_SCL);
-   _delay_us(5);
+   _delay_us(t);
 end
 
  
