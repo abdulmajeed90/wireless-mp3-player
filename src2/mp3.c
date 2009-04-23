@@ -22,6 +22,7 @@ uint8 sub = 0;
 //prototypes
 void init(void);
 void listFiles(uint8 *);
+void play(uint8 *);
 char* str_tok(char*, char*);
 
 char *last;
@@ -66,7 +67,43 @@ int main() {
 		fprintf(stdout,"FAT file system online\n\r");
 
     listFiles(PATH);
+	play(PATH);
 //	}
+}
+
+void play(uint8 *path){
+//starts playing the first file in the root folder
+	
+	uint16_t songs = 0;					//total songs in the root directery on the SD card
+	uint16_t totalsongs;
+	uint8_t type;							//file type
+	uint8_t buffer[512];
+	uint32 p;
+	uint32 totalsect, sectors;
+	uint16 leftbytes;
+	uint8_t SectorsPerClust = 4;
+
+	Search(PATH,&MusicInfo,&songs,&type);  //find total number of files
+	totalsongs = songs;
+	songs = 1;
+
+	Search(PATH,&MusicInfo,&songs,&type);  //obtain first file
+	fprintf(stdout,"Name: %s", MusicInfo.deName);
+
+	p = MusicInfo.deStartCluster+(((uint32)MusicInfo.deHighClust)<<16);//读文件首簇	//the first cluster of the file
+		
+	totalsect = MusicInfo.deFileSize/512; 	//calculate the total sectors
+	leftbytes = MusicInfo.deFileSize%512; 	//calculate the left bytes	
+	sectors=0;
+	do
+	for (int k = 0; k<SectorsPerClust; k++){
+		FAT_LoadPartCluster(p,k,buffer);//读一个扇区	//read a sector
+		for(int i = 0; i<512; i++) {
+			fprintf(stdout,"%x",buffer[i]);
+		}
+		p=FAT_NextCluster(p);
+		sectors++;
+	}while (sectors<totalsect);
 }
 
 void listFiles(uint8 *path){
@@ -118,7 +155,7 @@ void listFiles(uint8 *path){
   fprintf(stdout,"_______________________________________\n\r"); //a line between directory entries
 
 
-	//fprintf(stdout,"\n\rCard size = %\n\r",MMC_SD_ReadCapacity());
+//	fprintf(stdout,"\n\rCard size = %\n\r",MMC_SD_ReadCapacity());
 }
 
 
