@@ -57,13 +57,18 @@ int main(void) {
 	DIR dir;
 	FILINFO finfo;
 	char filename[8+1+3+1] = "";
+	int ret;
+	
+	fprintf(stdout,"About to start FAT system stuff\n\r");
 
-	while(disk_initialize(0)){
-		fprintf(stdout,"Initilising...\n\r");
+	fprintf(stdout,"Initilising...\n\r");
+	while(ret = disk_initialize(0) != 0){
+		fprintf(stdout,"%d\n\r",ret);
 	}
-	while (f_mount(0, &fatfs)) {
-		fprintf(stdout,"Mounting disk...\n\r");
-	}
+	
+	fprintf(stdout,"Mounting disk...\n\r");
+	while (!f_mount(0, &fatfs));
+	
 	f_opendir(&dir, filename);
 	fprintf(stdout,"\n\rListing files in root directory\n\r");
 	while (f_readdir(&dir, &finfo)==FR_OK && finfo.fname!=NULL){

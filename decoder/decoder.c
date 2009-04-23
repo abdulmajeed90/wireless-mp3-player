@@ -55,33 +55,46 @@ void sta013_stop(void);				// Instruct the STA013 to stop playing
 int main(void) {
 	init();
 
-  while(1){
-
-    int i = 0;
-    sta013_play();
+	unsigned int i = 0;
+	unsigned int size = sizeof(mp3_data);
+	sta013_start();
+	sta013_play();
     
-    while(PINA & (1<<DATA_REQ) && i<3000){
-      
+	while(1){
+	    while(~PINA & (1<<DATA_REQ) && i<size){
+			for (int8_t j = 7; j >=0; j--) {
+	    		set(PORTA,CLOCK);
+	        	_delay_us(1);
+	        	((mp3_data[i] >> j) & 0x01) ? set(PORTA,DATA): clr(PORTA,DATA);
+	        	_delay_us(1);
+	    		clr(PORTA,CLOCK);
+	       		_delay_us(1);
+	  	  	}
+	      	i++;
+			//if (i>>2 & 0x1) fprintf(stdout, "%d\n\r",i);
+		}
+	if (i>=size) i=0;
+ /*     
   		EEAR = i;
   		EECR |= (1<<EERE); 	//initiate a read of eeprom
-      mp3_byte = EEDR;
+      	mp3_byte = EEDR;
   		fprintf(stdout,"location: %d\tValue:%d\n\r",i, mp3_byte);  //print out eeprom value
-		  for (int8_t j = 7; j >=0; j--) {
+		for (int8_t j = 7; j >=0; j--) {
     		clr(PORTA,CLOCK);
-        _delay_us(5);
-        ((mp3_byte >> j) & 0x01) ? set(PORTA,DATA): clr(PORTA,DATA);
-        _delay_us(5);
+        	_delay_us(5);
+        	((mp3_byte >> j) & 0x01) ? set(PORTA,DATA): clr(PORTA,DATA);
+        	_delay_us(5);
     		set(PORTA,CLOCK);
-        _delay_us(5);
-  	  }
-      i++;
+       		_delay_us(5);
+  	  	}
+      	i++;
     }
       // while(PINA & 1<<DATA_REQ){fprintf(stdout,"PINA = %x\n\r",PINA);} //wait for STA to drive DATA_REQ pin low
-  		/*_delay_ms(50);
+  		_delay_ms(50);
   		set(PORTD,PIND2);
   		_delay_ms(50);
   		clr(PORTD,PIND2);*/
-    sta013_stop();
+    //sta013_stop();
   }
 }
 
@@ -99,11 +112,12 @@ void init(void) {
 
 	//set output pins as outputs
 	DDRA = (1<<I2C_SCL)|(1<<DATA)|(1<<CLOCK)|(1<<RESET);
-  //activate internal pullup of data request input
-  set(PORTA,DATA_REQ);
+	clr(PORTA,RESET);
+	//activate internal pullup of data request input
+	//set(PORTA,DATA_REQ);
 
 	fprintf(stdout,"MCU online\n\r");
-
+	set(PORTA,RESET);
 	//set up the STA013
 	while(config_sta013()){}
 	//config_sta013();
@@ -408,9 +422,13 @@ void sta013_play(void) begin
 }   else            {
       fprintf(stdout,"Playing MP3...\r\n");   
 }
-    address = 0x18;
-   data = 0x04;
-   sta013_write();
+   //address = 0x18;
+   //data = 0x04;
+   //sta013_write();
+
+//	address = 0x14;
+//	data = 0x00;
+//	sta013_write();
 end
  
 void sta013_stop(void) begin
