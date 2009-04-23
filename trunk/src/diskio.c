@@ -313,6 +313,8 @@ DSTATUS disk_initialize (
 		} else {							/* SDSC or MMC */
 			if (send_cmd(ACMD41, 0) <= 1) 	{
 				ty = 2; cmd = ACMD41;	/* SDSC */
+			} else if (send_cmd(CMD1,0) == 1) {
+				ty = 1; cmd = CMD1;		/* MMC */
 			} else {
 				ty = 1; cmd = CMD1;		/* MMC */
 			}
@@ -331,7 +333,7 @@ DSTATUS disk_initialize (
 	}
 	//set highest speed for SPI interface
 	SPCR = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (1 << SPR0);//20MHz/8
-    SPSR = 1;
+    //SPSR = 1;
 	return Stat;
 }
 
@@ -571,7 +573,7 @@ DRESULT disk_ioctl (
 
 void disk_timerproc (void)
 {
-	static BYTE pv;
+	static BYTE pv = 0;
 	BYTE n, s;
 
 
@@ -582,7 +584,7 @@ void disk_timerproc (void)
 
 	n = pv;
 	//pv = SOCKPORT & (SOCKWP | SOCKINS);	/* Sample socket switch */
-
+	
 	if (n == pv) {					/* Have contacts stabled? */
 		s = Stat;
 
