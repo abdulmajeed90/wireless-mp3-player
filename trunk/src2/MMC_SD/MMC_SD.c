@@ -124,7 +124,7 @@ uint8 MMC_SD_Reset(void)
 		if(retry>249) return r1;	//time out
 	} while(r1);
 //sdc_init:
-	SP9I_High();
+	SPI_High();
 	r1 = MMC_SD_SendCommand(59, 0);		//disable CRC
 
 	r1 = MMC_SD_SendCommand(16, 512);	//set sector size to 512
