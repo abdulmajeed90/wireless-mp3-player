@@ -85,6 +85,7 @@ void play(uint8 *path){
 
 	Search(PATH,&MusicInfo,&songs,&type);  //find total number of files
 	totalsongs = songs;
+
 	songs = 1;
 
 	Search(PATH,&MusicInfo,&songs,&type);  //obtain first file
@@ -99,10 +100,37 @@ void play(uint8 *path){
 	for (int k = 0; k<SectorsPerClust; k++){
 		FAT_LoadPartCluster(p,k,buffer);//读一个扇区	//read a sector
 		for(int i = 0; i<512; i++) {
-			fprintf(stdout,"%x",buffer[i]);
+			//fprintf(stdout,"%x",buffer[i]);
+			loop_until_bit_is_set(UCSR0A, UDRE0);
+  			UDR0 = buffer[i];
+			_delay_us(200);
 		}
 		p=FAT_NextCluster(p);
 		sectors++;
+	}while (sectors<totalsect);
+	
+	songs = 2;
+
+	Search(PATH,&MusicInfo,&songs,&type);  //obtain first file
+	fprintf(stdout,"Name: %s", MusicInfo.deName);
+
+	p = MusicInfo.deStartCluster+(((uint32)MusicInfo.deHighClust)<<16);//读文件首簇	//the first cluster of the file
+		
+	totalsect = MusicInfo.deFileSize/512; 	//calculate the total sectors
+	leftbytes = MusicInfo.deFileSize%512; 	//calculate the left bytes	
+	sectors=0;
+	do{
+	for (int k = 0; k<SectorsPerClust; k++){
+		FAT_LoadPartCluster(p,k,buffer);//读一个扇区	//read a sector
+		for(int i = 0; i<512; i++) {
+			//fprintf(stdout,"%x",buffer[i]);
+			loop_until_bit_is_set(UCSR0A, UDRE0);
+  			UDR0 = buffer[i];
+			_delay_us(200);
+		}
+		sectors++;
+	}
+	p=FAT_NextCluster(p);
 	}while (sectors<totalsect);
 }
 
