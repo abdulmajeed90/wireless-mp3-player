@@ -18,7 +18,7 @@
 #define F_CPU 20000000UL
 
 /* UART baud rate */
-#define UART_BAUD  9600
+#define UART_BAUD  115200
 
 
 #include <stdint.h>
