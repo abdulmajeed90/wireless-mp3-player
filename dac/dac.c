@@ -23,15 +23,55 @@ void SPI_MasterTransmit(unsigned int);	//transmit a 16bit value ovr SPI
 void SPI_MasterInit(void);							//initialise the SPI port
 void init(void);												//microcon initialise
 
+// RXC ISR variables								
+volatile char r_index;  //current string index
+volatile char r_buffer[16];	//input string 
+volatile char r_ready;  //flag for receive done
+volatile char r_char;  //current character  
+
 uint8_t count = 0;
 int16_t time = 0;
 uint16_t dac_value = 0;
+
+//*****************************************************************************
+
+ISR (USART0_RX_vect) {
+
+/*	r_char = UDR0 ;    //get a char
+	UDR0 = r_char;    //then print it
+	//build the input string
+	if (r_char != '\r') 	// Is the input a <enter>?
+	begin 
+		if (r_char == '\b')	// Is the input a backspace? 
+		begin
+			putchar(' '); 	// erase the character on the screen
+			putchar('\b');	// backup
+			--r_index ;		// wipe a character from the string
+		end
+		else   
+ 			r_buffer[r_index++] = r_char ; // add a character to the string
+	end
+	else 					// Human pressed <enter>
+	begin
+		putchar('\n');  			//use putchar to avoid overwrite
+		r_buffer[r_index] = 0x00;   //zero terminate
+		r_ready = 1;				//signal cmd processor
+		UCSR0B ^= (1<<RXCIE0) ;   	//stop rec ISR -- clear rxc
+	end
+*/
+	r_char = UDR0;
+	r_ready = 1;
+	UCSR0B &= ~(1<<RXCIE0) ;
+}
+
+
 
 ISR (TIMER0_COMPA_vect){
 	//timer0 compare match
 	//count++;
 	if(time>0) time--;
 }
+//*****************************************************************************
 
 int main(void) {
 
@@ -44,11 +84,12 @@ int main(void) {
 	//endless loop
 	while (1){
 		
-		dac_value = (count+=2)<<4;
-		//fprintf(stdout,"%d\n\r",dac_value);
-		dac_value |= 0x4000;
-		//dac_value = 0x43ff;
-		SPI_MasterTransmit(dac_value);
+		if(r_ready == 1) {
+			dac_value = (0x4000 | (r_char));
+			SPI_MasterTransmit(dac_value);
+			r_ready = 0;
+			UCSR0B |= (1<<RXCIE0) ;
+		}
 
 		if (time == 0) {
 			PORTD = ~PORTD;
@@ -110,6 +151,8 @@ void init(void) {
 	stdout = stdin = stderr = &uart_str;
 	fprintf(stdout,"MCU Online...\n\r");
 		
+	UCSR0B |= (1<<RXCIE0) ;
+
 	//Enable interrupts
 	sei();
 }
