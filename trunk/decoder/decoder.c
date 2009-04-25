@@ -8,6 +8,7 @@
 //#include <avr/iom16.h>
 #include "uart.h"
 #include "decode.h"
+#include "sta013.h"
 
 #define begin	{
 #define end		}
