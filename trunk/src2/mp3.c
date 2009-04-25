@@ -27,6 +27,32 @@ char* str_tok(char*, char*);
 
 char *last;
 
+//USART receive variables
+volatile uint8_t r_char;		//received character
+volatile uint8_t send = 0;	//send another 512B
+volatile uint8_t next = 0;	//skip to next song
+volatile uint8_t prev = 0;	//skip to prev song
+volatile uint8_t stop = 0;	//stop playback
+
+ISR (USART0_RX_vect) {
+	//the serial receive interrupt
+	r_char = UDR0;
+	if (r_char == 0x01){		//send data command
+		send = 1;
+	}
+	else if (r_char == 0x02) {
+		next = 1;
+	}
+	else if (r_char == 0x03) {
+		prev = 1;
+	}
+	else if (r_char == 0x04) {
+		stop = 1;
+	}
+	
+}
+
+
 int main() {
 
 	init();
@@ -67,7 +93,9 @@ int main() {
 		fprintf(stdout,"FAT file system online\n\r");
 
     listFiles(PATH);
-	play(PATH);
+	while (1) {
+		play(PATH);
+	}
 //	}
 }
 
@@ -88,50 +116,49 @@ void play(uint8 *path){
 
 	songs = 1;
 
-	Search(PATH,&MusicInfo,&songs,&type);  //obtain first file
-	fprintf(stdout,"Name: %s", MusicInfo.deName);
+	do{		//play through all songs
+		Search(PATH,&MusicInfo,&songs,&type);  //obtain first file
+		//fprintf(stdout,"Name: %s", MusicInfo.deName);
 
-	p = MusicInfo.deStartCluster+(((uint32)MusicInfo.deHighClust)<<16);//读文件首簇	//the first cluster of the file
+		p = MusicInfo.deStartCluster+(((uint32)MusicInfo.deHighClust)<<16);//读文件首簇	//the first cluster of the file
 		
-	totalsect = MusicInfo.deFileSize/512; 	//calculate the total sectors
-	leftbytes = MusicInfo.deFileSize%512; 	//calculate the left bytes	
-	sectors=0;
-	do
-	for (int k = 0; k<SectorsPerClust; k++){
-		FAT_LoadPartCluster(p,k,buffer);//读一个扇区	//read a sector
-		for(int i = 0; i<512; i++) {
-			//fprintf(stdout,"%x",buffer[i]);
-			loop_until_bit_is_set(UCSR0A, UDRE0);
-  			UDR0 = buffer[i];
-			_delay_us(200);
-		}
-		p=FAT_NextCluster(p);
-		sectors++;
-	}while (sectors<totalsect);
-	
-	songs = 2;
+		totalsect = MusicInfo.deFileSize/512; 	//calculate the total sectors
+		leftbytes = MusicInfo.deFileSize%512; 	//calculate the left bytes	
+		sectors=0;
 
-	Search(PATH,&MusicInfo,&songs,&type);  //obtain first file
-	fprintf(stdout,"Name: %s", MusicInfo.deName);
-
-	p = MusicInfo.deStartCluster+(((uint32)MusicInfo.deHighClust)<<16);//读文件首簇	//the first cluster of the file
+		do{		//play all sectors of the song
+			for (int k = 0; k<SectorsPerClust; k++){
+				FAT_LoadPartCluster(p,k,buffer);//read a sector
+				while(send == 0);    			//wait for read request
+				for(int i = 0; i<512; i++) {	//send 512B of data
+				
+					loop_until_bit_is_set(UCSR0A, UDRE0);
+		  			UDR0 = buffer[i];
+				}
+				send = 0;
+				p=FAT_NextCluster(p);
+				sectors++;
+				if (stop == 1) {
+					stop = 0;
+					return;
+				}
+				if ((next == 1)  || (prev == 1)) {
+					break;
+				}
+			}
+			if (next == 1){
+				next = 0;
+				break;
+			}
+			if (prev == 1) {
+				prev = 0;
+				songs -= 2;
+				break;
+			}
+		}while (sectors<totalsect);
 		
-	totalsect = MusicInfo.deFileSize/512; 	//calculate the total sectors
-	leftbytes = MusicInfo.deFileSize%512; 	//calculate the left bytes	
-	sectors=0;
-	do{
-	for (int k = 0; k<SectorsPerClust; k++){
-		FAT_LoadPartCluster(p,k,buffer);//读一个扇区	//read a sector
-		for(int i = 0; i<512; i++) {
-			//fprintf(stdout,"%x",buffer[i]);
-			loop_until_bit_is_set(UCSR0A, UDRE0);
-  			UDR0 = buffer[i];
-			_delay_us(200);
-		}
-		sectors++;
-	}
-	p=FAT_NextCluster(p);
-	}while (sectors<totalsect);
+		songs ++;
+	}while (songs <= totalsongs);
 }
 
 void listFiles(uint8 *path){
@@ -193,6 +220,8 @@ void init(void) {
 	uart_init();
 	stdout = stdin = stderr = &uart_str;
 	fprintf(stdout,"UART running\n\r");
+	UCSR0B |= (1<<RXCIE0) ;				//activate serial recieve interrupt
+	
 	
 	DDRD |= (1<<PIND2);
 
