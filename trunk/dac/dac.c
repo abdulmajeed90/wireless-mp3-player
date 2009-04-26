@@ -130,7 +130,7 @@ int main(void) {
 
 		if ((time>>3) >= 30) {
 			task1();
-			PORTA = ~PORTA;
+			PORTD = ~PORTD;
 			time = 0;
 		}
 		//SPI_MasterTransmit(dac_value);
