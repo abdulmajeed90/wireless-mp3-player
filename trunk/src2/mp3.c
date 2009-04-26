@@ -54,7 +54,6 @@ ISR (USART0_RX_vect) {
 
 
 int main() {
-
 	init();
 	uint8 r1;
 	
@@ -94,7 +93,8 @@ int main() {
 
     listFiles(PATH);
 	while (1) {
-		play(PATH);
+		if (send == 1)
+			play(PATH);
 	}
 //	}
 }
@@ -128,16 +128,19 @@ void play(uint8 *path){
 
 		do{		//play all sectors of the song
 			for (int k = 0; k<SectorsPerClust; k++){
-				FAT_LoadPartCluster(p,k,buffer);//read a sector
-				while(send == 0);    			//wait for read request
-				for(int i = 0; i<512; i++) {	//send 512B of data
 				
-					loop_until_bit_is_set(UCSR0A, UDRE0);
-		  			UDR0 = buffer[i];
+				while(send == 0);    			//wait for read request
+				for (int j = 0; j<4; j++) {			//send 4 sectors
+					FAT_LoadPartCluster(p,k,buffer);//read a sector
+					for(int i = 0; i<512; i++) {	//send 512B of data
+						while(!(UCSR0A & (1<<UDRE0)));
+						//loop_until_bit_is_set(UCSR0A, UDRE0);
+			  			UDR0 = buffer[i];
+					}
+					send = 0;
+					p=FAT_NextCluster(p);
+					sectors++;
 				}
-				send = 0;
-				p=FAT_NextCluster(p);
-				sectors++;
 				if (stop == 1) {
 					stop = 0;
 					return;
@@ -224,6 +227,7 @@ void init(void) {
 	
 	
 	DDRD |= (1<<PIND2);
+
 
 	fprintf(stdout,"MCU online\n\r");
 	//serialterminate();
