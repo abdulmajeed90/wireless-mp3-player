@@ -1,0 +1,1 @@
+This project aims to build an mp3 player that receives data from a base station(nearby) over zigBEE, decodes and plays the music. The project is based on atmega 644 micro. Software hosted here will run the base station and the mobile receiver.
